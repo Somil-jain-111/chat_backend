@@ -16,7 +16,7 @@ The project demonstrates clean backend architecture, concurrency-safe chat creat
 - Strict TypeScript, validated DTOs, centralized sanitization, and typed business exceptions
 - Helmet, explicit CORS configuration, bounded request bodies, and no-cache headers
 - PostgreSQL migrations, development seed data, Docker configuration, and Postman collection
-- Unit and HTTP contract tests
+- Focused unit tests for critical chat business rules
 
 ## Technology
 

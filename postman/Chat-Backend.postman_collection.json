@@ -1,0 +1,55 @@
+{
+  "info": {
+    "name": "Chat Backend",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:4000" },
+    { "key": "userAId", "value": "" },
+    { "key": "userBId", "value": "" },
+    { "key": "chatId", "value": "" },
+    { "key": "messageId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Create chat",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\"userAId\":\"{{userAId}}\",\"userBId\":\"{{userBId}}\"}" },
+        "url": "{{baseUrl}}/chat/create"
+      },
+      "event": [{ "listen": "test", "script": { "exec": ["pm.expect(pm.response.code).to.be.oneOf([200, 201]);", "pm.collectionVariables.set('chatId', pm.response.json().chatId);"] } }]
+    },
+    {
+      "name": "Send message",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\"senderId\":\"{{userAId}}\",\"text\":\"Hello from Postman\"}" },
+        "url": "{{baseUrl}}/chat/{{chatId}}/message/send"
+      },
+      "event": [{ "listen": "test", "script": { "exec": ["pm.response.to.have.status(201);", "pm.collectionVariables.set('messageId', pm.response.json().messageId);"] } }]
+    },
+    { "name": "List messages", "request": { "method": "GET", "url": "{{baseUrl}}/chat/{{chatId}}/messages?limit=50" } },
+    {
+      "name": "Mark message read",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\"userId\":\"{{userBId}}\"}" },
+        "url": "{{baseUrl}}/chat/{{chatId}}/message/{{messageId}}/read"
+      }
+    },
+    {
+      "name": "Update last seen",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\"userId\":\"{{userBId}}\",\"messageId\":\"{{messageId}}\"}" },
+        "url": "{{baseUrl}}/chat/{{chatId}}/lastseen"
+      }
+    },
+    { "name": "List user chats", "request": { "method": "GET", "url": "{{baseUrl}}/user/{{userAId}}/chats" } }
+  ]
+}

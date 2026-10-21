@@ -1,0 +1,10 @@
+node_modules/
+dist/
+coverage/
+.env
+.env.*
+!.env.example
+firebase-debug.log
+firestore-debug.log
+.DS_Store
+skills-lock.json
