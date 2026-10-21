@@ -15,6 +15,8 @@ interface MessageDocument {
   senderId: string;
   text: string;
   createdAt: Timestamp;
+  editedAt?: Timestamp;
+  deletedAt?: Timestamp;
   readBy?: Record<string, Timestamp>;
 }
 
@@ -57,6 +59,34 @@ export class FirestoreMessageRepository {
     return this.mapFailures(async () => {
       const snapshot = await this.messages(chatId).doc(messageId).get();
       return snapshot.exists ? this.toMessage(snapshot) : null;
+    });
+  }
+
+  async edit(chatId: string, messageId: string, text: string): Promise<MessageResponse> {
+    return this.mapFailures(async () => {
+      const reference = this.messages(chatId).doc(messageId);
+      await this.firestore.runTransaction(async (transaction) => {
+        const snapshot = await transaction.get(reference);
+        if (!snapshot.exists) throw BusinessException.notFound("Message not found");
+        if (this.messageData(snapshot).deletedAt) {
+          throw BusinessException.conflict("Deleted messages cannot be edited");
+        }
+        transaction.update(reference, { text, editedAt: FieldValue.serverTimestamp() });
+      });
+      return this.toMessage(await reference.get());
+    });
+  }
+
+  async deleteMessage(chatId: string, messageId: string): Promise<MessageResponse> {
+    return this.mapFailures(async () => {
+      const reference = this.messages(chatId).doc(messageId);
+      await this.firestore.runTransaction(async (transaction) => {
+        const snapshot = await transaction.get(reference);
+        if (!snapshot.exists) throw BusinessException.notFound("Message not found");
+        if (this.messageData(snapshot).deletedAt) return;
+        transaction.update(reference, { text: "", deletedAt: FieldValue.serverTimestamp() });
+      });
+      return this.toMessage(await reference.get());
     });
   }
 
@@ -135,6 +165,8 @@ export class FirestoreMessageRepository {
       senderId: data.senderId,
       text: data.text,
       createdAt: data.createdAt.toDate().toISOString(),
+      ...(data.editedAt ? { editedAt: data.editedAt.toDate().toISOString() } : {}),
+      ...(data.deletedAt ? { deletedAt: data.deletedAt.toDate().toISOString() } : {}),
       readBy: Object.fromEntries(
         Object.entries(data.readBy ?? {}).map(([userId, readAt]) => [userId, readAt.toDate().toISOString()]),
       ),

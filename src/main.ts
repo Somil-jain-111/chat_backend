@@ -14,7 +14,7 @@ async function bootstrap(): Promise<void> {
   app.useBodyParser("json", { limit: config.JSON_BODY_LIMIT });
   app.enableCors({
     origin: config.CORS_ALLOWED_ORIGINS,
-    methods: ["GET", "POST"],
+    methods: ["GET", "POST", "PATCH", "DELETE"],
     credentials: true,
   });
 

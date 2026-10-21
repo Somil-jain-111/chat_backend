@@ -5,7 +5,9 @@ import { UserRepository } from "./user.repository";
 
 export interface UserChatResponse {
   chatId: string;
-  memberIds: [string, string];
+  type: "direct" | "group";
+  title: string | null;
+  memberIds: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -22,16 +24,23 @@ export class UserService {
   }
 
   async requireUsers(ids: [string, string]): Promise<void> {
-    if ((await this.users.findByIds(ids)).length !== 2) {
+    await this.requireUserIds(ids);
+  }
+
+  async requireUserIds(ids: string[]): Promise<void> {
+    const uniqueIds = [...new Set(ids)];
+    if ((await this.users.findByIds(uniqueIds)).length !== uniqueIds.length) {
       throw BusinessException.notFound("One or more users were not found");
     }
   }
 
   async listChats(userId: string): Promise<UserChatResponse[]> {
     await this.requireUser(userId);
-    return (await this.chats.findForUser(userId)).map((chat) => ({
+    return (await this.chats.findForUser(userId)).map(({ chat, memberIds }) => ({
       chatId: chat.id,
-      memberIds: [chat.userAId, chat.userBId],
+      type: chat.type,
+      title: chat.title,
+      memberIds,
       createdAt: chat.createdAt.toISOString(),
       updatedAt: chat.updatedAt.toISOString(),
     }));

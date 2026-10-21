@@ -3,6 +3,8 @@ export interface MessageResponse {
   senderId: string;
   text: string;
   createdAt: string;
+  editedAt?: string;
+  deletedAt?: string;
   readBy: Record<string, string>;
 }
 

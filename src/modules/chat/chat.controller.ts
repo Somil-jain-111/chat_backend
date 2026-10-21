@@ -1,10 +1,12 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
   Param,
+  Patch,
   ParseUUIDPipe,
   Post,
   Query,
@@ -13,11 +15,17 @@ import {
 import { Response } from "express";
 import { ChatService } from "./chat.service";
 import {
+  AddGroupMemberDto,
   CreateChatDto,
+  CreateGroupChatDto,
+  DeleteMessageDto,
+  EditMessageDto,
   LastSeenDto,
+  ManageGroupDto,
   MessageIdPipe,
   MessageListQueryDto,
   ReadMessageDto,
+  RenameGroupDto,
   SendMessageDto,
 } from "./chat.dto";
 
@@ -32,12 +40,60 @@ export class ChatController {
     return { chatId: result.chatId };
   }
 
+  @Post("group")
+  createGroup(@Body() body: CreateGroupChatDto) {
+    return this.chats.createGroup(body.creatorId, body.title, body.memberIds);
+  }
+
+  @Patch(":chatId/group")
+  renameGroup(
+    @Param("chatId", new ParseUUIDPipe({ version: "4" })) chatId: string,
+    @Body() body: RenameGroupDto,
+  ) {
+    return this.chats.renameGroup(chatId, body.actorId, body.title);
+  }
+
+  @Post(":chatId/group/members")
+  addGroupMember(
+    @Param("chatId", new ParseUUIDPipe({ version: "4" })) chatId: string,
+    @Body() body: AddGroupMemberDto,
+  ) {
+    return this.chats.addGroupMember(chatId, body.actorId, body.userId);
+  }
+
+  @Delete(":chatId/group/members/:userId")
+  removeGroupMember(
+    @Param("chatId", new ParseUUIDPipe({ version: "4" })) chatId: string,
+    @Param("userId", new ParseUUIDPipe({ version: "4" })) userId: string,
+    @Body() body: ManageGroupDto,
+  ) {
+    return this.chats.removeGroupMember(chatId, body.actorId, userId);
+  }
+
   @Post(":chatId/message/send")
   async send(
     @Param("chatId", new ParseUUIDPipe({ version: "4" })) chatId: string,
     @Body() body: SendMessageDto,
   ) {
     return this.chats.sendMessage(chatId, body.senderId, body.text);
+  }
+
+  @Patch(":chatId/message/:messageId")
+  editMessage(
+    @Param("chatId", new ParseUUIDPipe({ version: "4" })) chatId: string,
+    @Param("messageId", MessageIdPipe) messageId: string,
+    @Body() body: EditMessageDto,
+  ) {
+    return this.chats.editMessage(chatId, messageId, body.senderId, body.text);
+  }
+
+  @Delete(":chatId/message/:messageId")
+  deleteMessage(
+    @Param("chatId", new ParseUUIDPipe({ version: "4" })) chatId: string,
+    @Param("messageId", MessageIdPipe) messageId: string,
+    @Body() body: DeleteMessageDto,
+  ) {
+    return this.chats.deleteMessage(chatId, messageId, body.senderId);
   }
 
   @Get(":chatId/messages")

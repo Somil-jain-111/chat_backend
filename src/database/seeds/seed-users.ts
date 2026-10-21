@@ -8,10 +8,17 @@ async function seed(): Promise<void> {
     [
       { name: "Alice Example", email: "alice@example.com" },
       { name: "Bob Example", email: "bob@example.com" },
+      { name: "Charlie Example", email: "charlie@example.com" },
     ],
     ["email"],
   );
-  const created = await users.find({ where: [{ email: "alice@example.com" }, { email: "bob@example.com" }] });
+  const created = await users.find({
+    where: [
+      { email: "alice@example.com" },
+      { email: "bob@example.com" },
+      { email: "charlie@example.com" },
+    ],
+  });
   console.log(created.map(({ id, name, email }) => ({ id, name, email })));
   await AppDataSource.destroy();
 }

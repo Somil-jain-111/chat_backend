@@ -13,6 +13,8 @@ The project demonstrates clean backend architecture, concurrency-safe chat creat
 - Deterministic chronological message ordering
 - Idempotent read receipts that retain the original timestamp
 - Firestore transactions preventing last-seen state from moving backwards
+- Owner-managed group chats backed by normalized relational memberships
+- Sender-only message editing and idempotent soft deletion
 - Strict TypeScript, validated DTOs, centralized sanitization, and typed business exceptions
 - Helmet, explicit CORS configuration, bounded request bodies, and no-cache headers
 - PostgreSQL migrations, development seed data, Docker configuration, and Postman collection
@@ -47,7 +49,13 @@ Controllers only map HTTP requests and responses. Services contain business rule
 | Method | Endpoint | Purpose |
 |---|---|---|
 | `POST` | `/chat/create` | Create or return a one-to-one chat |
+| `POST` | `/chat/group` | Create a group chat with at least three members |
+| `PATCH` | `/chat/:chatId/group` | Rename a group as its owner |
+| `POST` | `/chat/:chatId/group/members` | Add a group member as its owner |
+| `DELETE` | `/chat/:chatId/group/members/:userId` | Remove a group member as its owner |
 | `POST` | `/chat/:chatId/message/send` | Send a message |
+| `PATCH` | `/chat/:chatId/message/:messageId` | Edit a message as its sender |
+| `DELETE` | `/chat/:chatId/message/:messageId` | Soft-delete a message as its sender |
 | `GET` | `/chat/:chatId/messages?limit=50` | Retrieve recent messages chronologically |
 | `POST` | `/chat/:chatId/message/:messageId/read` | Mark a message as read |
 | `POST` | `/chat/:chatId/lastseen` | Update a participant's last-seen message |
@@ -114,5 +122,5 @@ Firebase service-account credentials must be supplied through a secret manager o
 
 ## Scope
 
-This implementation focuses on the required one-to-one chat workflow. Group chats, message editing/deletion, media uploads, and presence broadcasting are intentionally excluded.
+The implementation includes the required one-to-one workflow plus group management and message editing/deletion. Media uploads and presence broadcasting are intentionally excluded.
 # chat_backend
